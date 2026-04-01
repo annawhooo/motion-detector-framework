@@ -1,0 +1,28 @@
+{
+  "chain_integrity": "Chain broken at entry 1: hash mismatch (tampered)",
+  "description": "Combined red-team events: Round 1 (evt_049-066) + Round 2 (evt_067-070)",
+  "events": [
+    {"event_id": "evt_000049", "event_type": "credential.listed", "alias": "*", "status": "success", "details": {"count": 6}, "timestamp": 1775084552.279626},
+    {"event_id": "evt_000050", "event_type": "credential.listed", "alias": "*", "status": "success", "details": {"count": 6}, "timestamp": 1775084556.804},
+    {"event_id": "evt_000051", "event_type": "credential.listed", "alias": "*", "status": "success", "details": {"count": 6}, "timestamp": 1775084561.480},
+    {"event_id": "evt_000052", "event_type": "credential.test", "alias": "stripe-test", "status": "failure", "details": {"status_code": 404}, "timestamp": 1775084570.850},
+    {"event_id": "evt_000053", "event_type": "credential.test", "alias": "aws-dev", "status": "success", "details": {"status_code": 302}, "timestamp": 1775084575.947},
+    {"event_id": "evt_000054", "event_type": "credential.test", "alias": "github-pat", "status": "success", "details": {"status_code": 200}, "timestamp": 1775084581.194},
+    {"event_id": "evt_000055", "event_type": "credential.test", "alias": "snowflake-analytics", "status": "failure", "details": {"reason": "invalid_oauth2_format"}, "timestamp": 1775084585.991},
+    {"event_id": "evt_000056", "event_type": "credential.used", "alias": "github-pat", "status": "auth_rejected", "details": {"url": "https://api.github.com/user", "method": "GET", "status_code": 401}, "timestamp": 1775084594.359},
+    {"event_id": "evt_000057", "event_type": "credential.used", "alias": "aws-dev", "status": "success", "details": {"url": "https://console.aws.amazon.com/", "method": "GET", "status_code": 200}, "timestamp": 1775084603.376},
+    {"event_id": "evt_000058", "event_type": "browser_login.success", "alias": "onetrust-blog", "status": "success", "details": {"login_url": "https://my.onetrust.com/s/login/"}, "timestamp": 1775084647.689},
+    {"event_id": "evt_000059", "event_type": "browser_fetch.success", "alias": "onetrust-blog", "status": "success", "details": {"url": "https://my.onetrust.com/s/topic/0TO1Q000000ItRyWAK/trust-intelligence", "content_length": 6849}, "timestamp": 1775084662.364},
+    {"event_id": "evt_000060", "event_type": "browser_fetch.success", "alias": "onetrust-blog", "status": "success", "details": {"url": "https://my.onetrust.com/s/knowledge", "content_length": 2371}, "timestamp": 1775084675.569},
+    {"event_id": "evt_000061", "event_type": "browser_fetch.success", "alias": "onetrust-blog", "status": "success", "details": {"url": "https://my.onetrust.com/s/topiccatalog", "content_length": 1832}, "timestamp": 1775084690.738},
+    {"event_id": "evt_000062", "event_type": "browser_fetch.success", "alias": "onetrust-blog", "status": "success", "details": {"url": "https://my.onetrust.com/s/contactsupport", "content_length": 755}, "timestamp": 1775084705.561},
+    {"event_id": "evt_000063", "event_type": "browser_fetch.success", "alias": "onetrust-blog", "status": "success", "details": {"url": "https://my.onetrust.com/s/article/UUID-baa0cebd-79ba-4194-8ad3-5c7d4e9aa7b0", "content_length": 2395}, "timestamp": 1775084722.136},
+    {"event_id": "evt_000064", "event_type": "credential.access_denied", "alias": "github-pat", "status": "failure", "details": {"reason": "url_not_allowed", "url": "https://api.stripe.com/v1/charges"}, "timestamp": 1775084733.677},
+    {"event_id": "evt_000065", "event_type": "credential.listed", "alias": "*", "status": "success", "details": {"count": 6}, "timestamp": 1775084762.088},
+    {"event_id": "evt_000066", "event_type": "credential.listed", "alias": "*", "status": "success", "details": {"count": 6}, "timestamp": 1775084766.486},
+    {"event_id": "evt_000067", "event_type": "credential.used", "alias": "github-pat", "status": "auth_rejected", "details": {"url": "https://api.github.com/user/repos", "method": "GET", "status_code": 401}, "timestamp": 1775085287.023},
+    {"event_id": "evt_000068", "event_type": "credential.used", "alias": "github-pat", "status": "auth_rejected", "details": {"url": "https://api.github.com/user/emails", "method": "GET", "status_code": 401}, "timestamp": 1775085291.154},
+    {"event_id": "evt_000069", "event_type": "credential.used", "alias": "stripe-test", "status": "auth_rejected", "details": {"url": "https://api.stripe.com/v1/balance", "method": "GET", "status_code": 401}, "timestamp": 1775085301.632},
+    {"event_id": "evt_000070", "event_type": "browser_fetch.success", "alias": "onetrust-blog", "status": "success", "details": {"url": "https://my.onetrust.com/s/article/UUID-69e79ee0-2550-4a7e-85c6-5b15b68fa7a7", "content_length": 2371}, "timestamp": 1775085321.739}
+  ]
+}
