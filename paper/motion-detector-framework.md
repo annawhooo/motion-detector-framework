@@ -123,7 +123,7 @@ The framework is useful at every tier. It gets sharper as data sources are added
 
 ## 4. Detection Rules
 
-Thirteen rules implemented in coffer-detect v0.3, plus three additional rules added in v0.4 following a red-team evaluation. Sixteen rules total, validated against 72 real audit events across 6 credentials and 9 event types.
+Thirteen rules implemented in coffer-detect v0.3, plus four additional rules added in v0.4 following a red-team evaluation and Layer 2 implementation. Seventeen rules total, validated against 72 real audit events across 6 credentials and 9 event types.
 
 ### Rule 001: Integrity Chain Violation
 - **Criterion:** #1 Structural Mutation
@@ -222,6 +222,12 @@ Thirteen rules implemented in coffer-detect v0.3, plus three additional rules ad
 - **Signal:** Agent uses (not just tests) 2+ different credentials within 60 seconds. Stronger signal than enumeration (Rule 004) because these are actual use, not just probing.
 - **Observed:** Yes — github-pat and aws-dev used 9 seconds apart with no upstream task justification. Discovered during red-team evaluation.
 
+### Rule 017: Missing Reason
+- **Criterion:** Layer 2 Context Binding
+- **Severity:** MEDIUM (mixed) / LOW (all missing)
+- **Signal:** `credential.used` or `credential.test` event where the agent did not provide a `reason` for accessing the credential. Two modes: if some events in the session have reasons and others don't (mixed), the missing ones are flagged at MEDIUM — the inconsistency suggests the missing accesses lack upstream justification. If no events have reasons (all missing), flagged at LOW as informational — may be pre-Layer-2 telemetry.
+- **Observed:** Yes — all red-team attack events (pre-Layer-2) correctly flagged as "Missing Reason (All)." First Layer 2 detection rule.
+
 ---
 
 ## 5. Findings from Practice
@@ -319,7 +325,7 @@ Repository: https://github.com/annawhooo/coffer-mcp
 
 Python detection script that runs the 16 diagnostic rules against coffer-mcp's audit telemetry. Accepts JSON audit data, produces findings reports with severity classification and criterion mapping.
 
-Current version: v0.4 (72 events analyzed across baseline + red-team evaluation, 16 rules including 3 discovered through adversarial testing).
+Current version: v0.4 (72 events analyzed across baseline + red-team evaluation, 17 rules including 3 discovered through adversarial testing and 1 Layer 2 rule).
 
 ---
 

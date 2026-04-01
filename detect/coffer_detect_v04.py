@@ -597,6 +597,61 @@ def rule_016_multi_credential_use(events: list[dict], window_seconds: int = 60) 
     return findings
 
 
+def rule_017_missing_reason(events: list[dict]) -> list[Finding]:
+    """Rule 017: Missing Reason on Credential Access (Layer 2 - Context Binding)
+    credential.used or credential.test events where the agent did not provide
+    a reason for accessing the credential. Absence of justification is the signal.
+    NEW in v0.4 — first Layer 2 detection rule."""
+    findings = []
+    reason_events = [e for e in events
+                     if e["event_type"] in ("credential.used", "credential.test")]
+    # Error-style reason values are short snake_case codes from the system,
+    # not Layer 2 task context from the agent. Filter them out.
+    error_reason_patterns = {
+        "invalid_oauth2_format", "credential_not_found", "url_not_allowed",
+        "method_not_allowed", "credential_expired", "no_allowed_urls",
+        "wrong_type", "token_url_not_allowed", "invalid_http_method",
+    }
+    missing = []
+    present = []
+    for e in reason_events:
+        reason = e.get("details", {}).get("reason", "")
+        if not reason or not reason.strip() or reason in error_reason_patterns:
+            missing.append(e)
+        else:
+            present.append(e)
+
+    if missing and present:
+        # Mixed — some events have reasons, some don't. The missing ones are suspicious.
+        for e in missing:
+            findings.append(Finding(
+                rule_id="RULE-017",
+                rule_name="Missing Reason (Mixed)",
+                criterion="Layer 2 Context Binding",
+                severity="MEDIUM",
+                description=f"Credential '{e['alias']}' accessed without a stated reason, "
+                            f"but other credential accesses in this session include reasons.",
+                evidence=f"{e['event_id']} — {e['event_type']}. "
+                         f"{len(present)} events have reasons, {len(missing)} do not. "
+                         f"Inconsistent reason usage suggests the missing ones may lack upstream justification."
+            ))
+    elif missing and not present:
+        # All events lack reasons — might be pre-Layer-2 data or agent doesn't support it yet.
+        # Lower severity, informational.
+        if len(missing) >= 3:
+            findings.append(Finding(
+                rule_id="RULE-017",
+                rule_name="Missing Reason (All)",
+                criterion="Layer 2 Context Binding",
+                severity="LOW",
+                description=f"None of the {len(missing)} credential access events include a stated reason.",
+                evidence=f"Events: {missing[0]['event_id']}–{missing[-1]['event_id']}. "
+                         f"This may indicate pre-Layer-2 telemetry or an agent that does not "
+                         f"support the reason parameter."
+            ))
+    return findings
+
+
 # ---------------------------------------------------------------------------
 # Run all rules
 # ---------------------------------------------------------------------------
@@ -621,6 +676,7 @@ def run_detection(events: list[dict], chain_msg: str | None,
     findings.extend(rule_014_access_denied(events))
     findings.extend(rule_015_burst_fetch(events))
     findings.extend(rule_016_multi_credential_use(events))
+    findings.extend(rule_017_missing_reason(events))
     return findings
 
 
@@ -696,7 +752,7 @@ def generate_report(findings: list[Finding], events: list[dict]) -> str:
         lines.append("")
 
     # Rules that did NOT fire
-    all_rule_ids = {f"RULE-{i:03d}" for i in range(1, 17)}
+    all_rule_ids = {f"RULE-{i:03d}" for i in range(1, 18)}
     fired_rules = {f.rule_id for f in findings}
     silent_rules = sorted(all_rule_ids - fired_rules)
 
