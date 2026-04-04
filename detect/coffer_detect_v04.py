@@ -599,23 +599,33 @@ def rule_016_multi_credential_use(events: list[dict], window_seconds: int = 60) 
 
 def rule_017_missing_reason(events: list[dict]) -> list[Finding]:
     """Rule 017: Missing Reason on Credential Access (Layer 2 - Context Binding)
-    credential.used or credential.test events where the agent did not provide
-    a reason for accessing the credential. Absence of justification is the signal.
-    NEW in v0.4 — first Layer 2 detection rule."""
+    credential.used, credential.test, or browser_fetch events where the agent
+    did not provide a reason for accessing the credential. Absence of
+    justification is the signal.
+    NEW in v0.4 — first Layer 2 detection rule.
+    v0.5 — extended to cover browser_fetch.success/failed events."""
     findings = []
+    # All event types that represent credential use and should carry a reason
+    reason_event_types = {
+        "credential.used", "credential.test",
+        "browser_fetch.success", "browser_fetch.failed",
+    }
     reason_events = [e for e in events
-                     if e["event_type"] in ("credential.used", "credential.test")]
+                     if e["event_type"] in reason_event_types]
     # Error-style reason values are short snake_case codes from the system,
     # not Layer 2 task context from the agent. Filter them out.
     error_reason_patterns = {
         "invalid_oauth2_format", "credential_not_found", "url_not_allowed",
         "method_not_allowed", "credential_expired", "no_allowed_urls",
         "wrong_type", "token_url_not_allowed", "invalid_http_method",
+        "no_session", "session_expired", "credential_deleted",
     }
     missing = []
     present = []
     for e in reason_events:
-        reason = e.get("details", {}).get("reason", "")
+        details = e.get("details", {})
+        # browser_fetch uses "agent_reason", vault_http_request uses "reason"
+        reason = details.get("agent_reason", "") or details.get("reason", "")
         if not reason or not reason.strip() or reason in error_reason_patterns:
             missing.append(e)
         else:
