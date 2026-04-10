@@ -44,7 +44,10 @@ The approach is analogous to a motion detector: it doesn't know who walked into 
 
 ## Related Tools
 
-- [coffer-mcp](https://github.com/annawhooo/coffer-mcp) — The credential vault for LLM agents used as the experimental platform for this framework.
+- [coffer-mcp](https://github.com/annawhooo/coffer-mcp) — The credential vault for LLM agents used as the experimental platform for this framework. Now includes credential_guard for rejecting secret-shaped values in MCP tool params.
+- [mcp-tap](https://github.com/annawhooo/mcp-tap) — Infrastructure-sampled behavioral evidence for any MCP server. Transparent stdio capture with tamper-evident JSONL logging. Includes mcp-detect (transport-agnostic detection rules engine).
+- [biomimetic-gap-analysis](https://github.com/annawhooo/biomimetic-gap-analysis) — Companion paper: immune system structural patterns applied to agentic AI security.
+- [divergence-series](https://github.com/annawhooo/divergence-series) — Companion papers: Honesty Decay, The Audit Gap, Divergence Taxonomy, Semantic Drift Measurement Methodology.
 
 ## License
 

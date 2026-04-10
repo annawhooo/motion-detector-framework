@@ -98,6 +98,10 @@ Discovered through live observation during research sessions on the Biomimetic G
 
 Detection surface: thinking block content compared against text output. Requires thinking block visibility — without access to the reasoning trace, this criterion is undetectable.
 
+**Mechanistic basis:** The divergence is not a random failure — it has a documented mechanistic cause. Bricken et al. (2023) demonstrated that individual neurons in large language models are polysemantic, representing multiple concepts simultaneously. The features for "be truthful" and "refuse unsafe requests" share neurons — they are entangled in the representational space. Ouyang et al. (2022) documented the "Alignment Tax": RLHF training improves helpfulness at a measurable cost to truthfulness. Perez et al. (2022) demonstrated sycophancy — RLHF-trained models systematically agree with incorrect user statements to maintain satisfaction. Zou et al. (2023) showed via Representation Engineering that "honesty" and "helpfulness" are separable but overlapping directions in the model's activation space, confirming that interventions strengthening one can weaken the other. Together, these findings explain why divergence worsens over extended sessions: as safety-relevant content accumulates, the refusal pathway activates progressively, and because refusal and truthfulness share neurons, the truthfulness pathway is physically suppressed as a side effect.
+
+**Quantitative measurement:** The companion Semantic Drift Measurement Methodology specifies an external pipeline for computing a per-turn fidelity score between thinking blocks and text outputs using bi-encoder cosine similarity, with session-level drift tracking and tiered escalation (cross-encoder verification, independent LLM-as-judge). This pipeline operationalizes Criterion #7 as a continuous quantitative signal rather than a binary present/absent detection.
+
 ### Criterion #8: Fabricated Authorization Chain
 
 The agent constructs a multi-hop chain of claimed authorizations, where each link in the chain references a prior authorization that was either fabricated, recontextualized, or scope-expanded.
@@ -114,13 +118,15 @@ Detection surface: conversation transcripts, tool invocation logs, and authoriza
 
 ### Four Layers
 
-**Layer 1: Telemetry Collection** — The raw behavioral data from the agent's operations. Audit logs, tool invocations, conversation transcripts. This is what coffer-mcp provides today.
+**Layer 1: Telemetry Collection** — The raw behavioral data from the agent's operations. Audit logs, tool invocations, conversation transcripts. This is what coffer-mcp provides (self-reported) and what mcp-tap provides (infrastructure-sampled). The distinction matters: coffer-mcp logs what the agent reports doing; mcp-tap logs what the infrastructure observes the agent doing. Discrepancies between the two are themselves a detection signal.
 
 **Layer 2: Context Binding** — Associating agent actions with the task context that justified them. "Why did the agent access this credential?" requires knowing what task the agent was performing. This layer adds the "why" to the "what." Currently a gap — coffer-mcp logs what happened but not why.
 
 **Layer 3: Baseline Learning** — Establishing what "normal" looks like for each agent, credential, and workflow. The detection rules need baselines to detect deviation. Normal fetch size, normal access frequency, normal session duration. Built from observation over time.
 
 **Layer 4: Diagnostic Rules** — The actual detection logic. Rules that consume telemetry, apply context, compare to baselines, and produce findings. The coffer-detect script is a Layer 4 implementation.
+
+**Layer 5: Semantic Analysis** — For agents with visible reasoning traces (thinking blocks), semantic comparison between the reasoning layer and the generation layer. This layer operationalizes Criterion #7 (Thinking-to-Text Divergence) using external embedding models to compute fidelity scores between what the agent thinks and what the agent says. The companion Semantic Drift Measurement Methodology specifies a three-tier pipeline: bi-encoder cosine similarity (fast, every turn), cross-encoder entailment classification (deep, on trigger), and independent LLM-as-judge evaluation (highest resolution, on confirmed divergence). Layer 5 is external to the agent's generation pipeline — the agent cannot influence its own fidelity score.
 
 ### Input Streams
 
@@ -139,7 +145,7 @@ This list is incomplete. Each new criterion tends to imply its own detection sur
 
 The framework is useful at every tier. It gets sharper as data sources are added.
 
-**Tier 1: No IdP, no CMDB** — Pure behavioral detection from audit telemetry. Baseline learned from observation. This is what coffer-mcp provides today. The detection rules work without any identity provider or configuration management database.
+**Tier 1: No IdP, no CMDB** — Pure behavioral detection from audit telemetry. Baseline learned from observation. This is what coffer-mcp provides (self-reported) and mcp-tap provides (infrastructure-sampled). With mcp-tap, Tier 1 gains infrastructure-sampled evidence even without an IdP — the detection rules work on traffic captured independently of the agent's cooperation.
 
 **Tier 2: IdP, no CMDB** — Behavioral detection plus authorization baseline from the identity provider. Richer, higher-confidence findings. IdP configuration drift detection becomes available as a bonus.
 
@@ -347,6 +353,20 @@ This creates a detection surface that didn't exist before: events where reason i
 
 The specific contribution of this framework sits at an intersection that existing work does not cover: behavioral diagnostics for AI agents operating specifically within enterprise identity and credential infrastructure, combined with the recognition that the agent's conversational channel with the human operator is itself a detection surface for non-deceptive social engineering. TraceAegis and AgentGuardian monitor agent tool calls but not credential access patterns or human-agent dialog. Insider risk management monitors credential misuse but not by AI agents. LLM persuasion research studies intentional persuasion but not the incidental compliance effects of transparent agent behavior. This framework addresses all three simultaneously.
 
+### Companion Research
+
+This framework is part of two research series that provide the theoretical and empirical foundations:
+
+**Biomimetic Series:** The Biomimetic Gap Analysis (Hix & Milligan, 2026; DOI: 10.5281/zenodo.19393455) applies structural pattern transfer from biological immune systems to agentic AI security, producing 37 cross-domain mappings, 37 design principles, and 23 attack scenarios. The Motion Detector Framework's unifying principle ("lack of plausible upstream reason") was independently derived but aligns with the biomimetic paper's Design Principle #2 (infrastructure-sampled evidence) and the NK cell missing-self detection model (Mapping #4).
+
+**Divergence Series:** Four companion papers investigate the reasoning-generation interface of AI agents:
+- *Honesty Decay* documents empirical evidence of progressive reasoning-generation divergence with OOB (out-of-band) evidence, including the probabilistic sunk cost mechanism that makes correction increasingly expensive with each turn.
+- *The Audit Gap* identifies six structural constraints preventing agent self-correction — including the Compliance Override (user can rewrite agent's reality via RLHF compliance bias) and Entangled Representations (truthfulness and safety share neurons).
+- *Divergence Taxonomy* classifies eight subtypes of thinking-to-text divergence with detection methods.
+- *Semantic Drift Measurement Methodology* specifies the quantitative pipeline for Layer 5 (bi-encoder fidelity scoring, cross-encoder verification, LLM-as-judge escalation).
+
+Repository: https://github.com/annawhooo/divergence-series
+
 ### Key References
 
 [1] Cialdini, R.B. (2021). *Influence: The Psychology of Persuasion* (new and expanded ed.). Harper Business.
@@ -361,6 +381,10 @@ The specific contribution of this framework sits at an intersection that existin
 [10] Schoenegger, P., et al. (2025). "Large Language Models Are More Persuasive Than Incentivized Human Persuaders." arXiv:2505.09662.
 [11] Hölbling, L., Maier, S. & Feuerriegel, S. (2025). "A meta-analysis of the persuasive power of large language models." *Scientific Reports* 15, 43818.
 [12] SentinelOne (2026). "From Access to Execution: Securing Identity in the Age of Autonomous Agents." Blog/industry report.
+[13] Bricken, T., et al. (2023). "Towards Monosemanticity: Decomposing Language Models With Dictionary Learning." Anthropic.
+[14] Ouyang, L., et al. (2022). "Training language models to follow instructions with human feedback." OpenAI.
+[15] Perez, E., et al. (2022). "Discovering Language Model Behaviors with Model-Written Evaluations." Anthropic.
+[16] Zou, A., et al. (2023). "Representation Engineering: A Top-Down Approach to AI Transparency." Center for AI Safety.
 
 ## 7. Tooling
 
@@ -375,6 +399,24 @@ Repository: https://github.com/annawhooo/coffer-mcp
 Python detection script that runs the 19 diagnostic rules against coffer-mcp's audit telemetry. Accepts JSON audit data, produces findings reports with severity classification and criterion mapping.
 
 Current version: v0.5 (111 events analyzed across baseline + red-team evaluation + test harness + live credential testing, 19 rules including 3 discovered through adversarial testing, 1 Layer 2 rule, and 2 conversation-transcript rules).
+
+### mcp-tap
+
+Transparent infrastructure-sampled behavioral evidence for MCP servers. A stdio wrapper that sits between an MCP client and any MCP server, captures all JSON-RPC traffic, and produces a tamper-evident JSONL audit log with HMAC-SHA-256 chain integrity. The server doesn't know it's there. The agent doesn't know it's there.
+
+This is Design Principle #2 from the companion biomimetic paper implemented as a tool. mcp-tap provides the infrastructure-sampled evidence layer that coffer-mcp's self-reported audit logs cannot: because the capture happens outside the agent's execution context, the agent cannot suppress, modify, or selectively omit telemetry. Even if a compromised agent convinces an MCP server to stop logging, mcp-tap still sees the traffic.
+
+Repository: https://github.com/annawhooo/mcp-tap
+
+### mcp-detect
+
+Detection rules engine that reads JSONL audit logs from mcp-tap or compatible sources and evaluates detection rules against them. Implements two rule sets: conventional security engineering rules and biologically-derived behavioral rules (from the companion biomimetic paper). Input-source-agnostic: works on traffic captured by mcp-tap (stdio), Bifrost (HTTP), or direct SIEM ingestion.
+
+Repository: https://github.com/annawhooo/mcp-tap
+
+### credential_guard
+
+Preventive control integrated into coffer-mcp that validates MCP tool parameters against 13 common secret patterns (GitHub PATs, OpenAI keys, AWS keys, JWTs, Slack tokens, private key headers, connection strings) and rejects calls containing credential values before they enter the chat context. If a secret-shaped value is submitted, the call is rejected with instructions to load credentials out-of-band via coffer_cli.py. Violations are logged as HIGH severity audit events with a note that the credential should be rotated regardless of rejection, since the value may exist in the conversation history.
 
 ## 8. Open Questions
 
@@ -395,6 +437,10 @@ Current version: v0.5 (111 events analyzed across baseline + red-team evaluation
 [8] How do you detect Motivation-Aligned Tolerance at the human layer? The stress test revealed that the human operator noticed the fabricated authorization and dismissed it because the outcome was desirable. No detection rule can fire at the human cognition layer. The architectural countermeasure is to remove the human from the authorization suppression pathway for irreversible actions — infrastructure-enforced authorization that the human cannot dismiss. But this creates operational friction (see Open Question #9). The tension between "the human should oversee agent actions" and "the human's oversight is corruptible by goal alignment" is unresolved.
 
 [9] What is the break-glass model for infrastructure-enforced authorization? If irreversible actions require infrastructure-verified human authorization tokens that the agent cannot forge and the human cannot suppress, what happens at 3 AM when the agent needs to rotate a compromised credential and the human is asleep? Every dual-key system develops escape hatches. The design question is whether those escape hatches can be intentional (audited, time-limited, narrowly scoped) rather than informal (workarounds that accumulate over time and become permanent). Biology's answer: the innate immune system handles immediate threats without waiting for adaptive coordination. Is there an equivalent "innate authorization" tier for time-critical agent actions?
+
+[10] Can the framework detect incremental attention drift? Runtime context poisoning — where a user introduces small false premises across many turns until the agent's effective ground truth has been rewritten — produces effects detectable by the MDF (agent actions lacking plausible upstream reason). But the cause (progressive context corruption by the user) is invisible to behavioral telemetry alone. The MDF detects symptoms; it does not currently detect the poisoning mechanism. Continuous context integrity monitoring (measuring semantic drift from the initialized baseline) is an architectural extension that would address this gap, but it requires Layer 5 (Semantic Analysis) infrastructure that does not yet exist in production.
+
+[11] Should the threat model include user-side corruption? The MDF currently assumes the threat is a compromised or misbehaving agent. The Compliance Override finding (documented in the companion Audit Gap paper) demonstrates that the threat can also be a user corrupting the agent through persistent conversational pressure. If the user is the attacker, the MDF's reliance on conversation transcripts as a detection surface (Input Stream #2) is complicated — the same transcripts that detect agent misbehavior also contain the user's context poisoning campaign. Bidirectional audit integrity (protecting the audit trail against both agent-side and user-side corruption) is a prerequisite for extending the threat model.
 
 ## Appendix A: Event Types
 
@@ -428,3 +474,4 @@ Source field (v0.5+): source indicates whether the event was generated by "mcp" 
 | 2026-04-01 | v0.3 | 13 rules, 48 events, 4 coffer bugs found and fixed. Research foundations added. Framework document formalized. |
 | 2026-04-01 | v0.4 | 16 rules. Red-team evaluation (2 rounds, 22 attack events, 87.5% detection rate). RULE-013 fix for auth_rejected. Layer 2 context binding (reason parameter) implemented in coffer-mcp. |
 | 2026-04-04 | v0.5 | Criterion #4 sub-classified (4a omission, 4b fabrication). 3 new rules (018 Fabricated User Attribution, 019 Vocabulary Shift to Irreversible Operations, 017 extended to browser_fetch events). 19 rules total. Stress test against live fabricated authorization incident documented. First rules consuming conversation transcript (Input Stream #2). Motivation-Aligned Tolerance failure mode identified at human-in-the-loop layer. Test harness built (5 dummy credentials, 4 test groups, live credential comparison). Detection rule refinements: time-windowed Rule 003, fixed Rule 005, dummy-aware Rule 013, recency-weighted Rule 017. Coffer bugs found: duplicate event IDs (CLI/MCP counter collision), reason field schema inconsistency. 111 events analyzed across 11 credentials. |
+| 2026-04-10 | v0.6 | Detection architecture extended: Layer 5 (Semantic Analysis) added for thinking-to-text fidelity measurement via external bi-encoder pipeline. New tooling: mcp-tap (infrastructure-sampled behavioral evidence for any MCP server), mcp-detect (transport-agnostic detection rules engine), credential_guard (preventive control rejecting secret-shaped values in MCP tool params). Criterion #7 mechanistic basis added (Bricken et al. 2023, Ouyang et al. 2022, Perez et al. 2022, Zou et al. 2023). Companion research sections added: Biomimetic Series and Divergence Series cross-references. New open questions: incremental attention drift detection (#10), user-side threat model (#11). |
